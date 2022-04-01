@@ -10,7 +10,7 @@
 | 5. Priyanka Thambabathula     |https://github.com/aneela123/Big-Data-Group6Project/tree/main/Priyanka                   |   
 | 6. Rasagna Banda              |https://github.com/aneela123/Big-Data-Group6Project/tree/main/Rasagna                 |
 
-![TeamPicture](https://user-images.githubusercontent.com/77635770/160168682-61663fb8-2c84-4ed7-8c64-f7e6310d3474.jpeg)
+![TeamPicture](https://github.com/aneela123/Big-Data-Group6Project/blob/main/Padmini/GroupPicture.JPG)
 
 # Description                         
 
