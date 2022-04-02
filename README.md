@@ -47,6 +47,8 @@ I have learned and added the Page Rank Algorithm explanation for better understa
 
 ## Rasagna
 
+I have created wiki pages for every team member in the group and added contributions, issues, work pages and edited Home page
+
 
 ## Priyanka
 
