@@ -1,4 +1,3 @@
-# Scala: 5-MyPage Exampke Web
-
-Links:
+# Scala: 5-MyPage Example WEb
+Link:
 [README](README.md)
