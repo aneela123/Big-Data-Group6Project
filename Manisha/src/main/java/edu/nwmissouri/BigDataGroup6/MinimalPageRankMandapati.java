@@ -39,14 +39,16 @@ public class MinimalPageRankMandapati {
     PCollection<KV<String, String>> collectionkv2 = MandapatiMap(p, "java.md", dataFolder);
     PCollection<KV<String, String>> collectionkv3 = MandapatiMap(p, "python.md", dataFolder);
     PCollection<KV<String, String>> collectionkv4 = MandapatiMap(p, "ReadMe.md", dataFolder);
-    PCollection<KV<String, String>> collectionkv5 = MandapatiMap(p, "Scala.md", dataFolder);
+    PCollection<KV<String, String>> collectionkv5 = MandapatiMap(p, "ReadMe.md", dataFolder);
 
 
-    PCollectionList<KV<String, String>> result = PCollectionList.of(collectionkv1).and(collectionkv2).and(collectionkv3).and(collectionkv4).and(collectionkv5);
+    PCollectionList<KV<String, String>> result = PCollectionList.of(collectionkv1).
+    and(collectionkv2).and(collectionkv3).and(collectionkv4).and(collectionkv5);
+
     PCollection<KV<String, String>> mergedList = result.apply(Flatten.<KV<String,String>>pCollections());
-    PCollection<KV<String, Iterable<String>>> Grouplist = mergedList.apply(GroupByKey.create());
+    PCollection<KV<String, Iterable<String>>> PCMyGrpList =mergedList.apply(GroupByKey.create());
     
-    PCollection<String> pckvStrings =  mergedList.apply(
+    PCollection<String> pckvStrings =  PCMyGrpList.apply(
       MapElements.into(  
         TypeDescriptors.strings())
           .via((resultMergeLstout) -> resultMergeLstout.toString()));
