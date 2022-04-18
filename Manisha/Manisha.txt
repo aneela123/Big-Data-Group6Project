@@ -1,1 +1,7 @@
-This is sample txt.
+<<<<<<< HEAD
+This is my sample text
+
+=======
+This is my sample text
+
+>>>>>>> 8088c38cbe0943a0c2b7533dcdaf920f25b16074
