@@ -33,6 +33,6 @@ mvn compile exec:java -D exec.mainClass=org.apache.beam.examples.WordCount `
 ## Execute PR Quick Start
 
 ```PowerShell
-mvn compile exec:java -D exec.mainClass=du.nwmissouri.edu.MinimalPageRankMandapati
- 
+mvn compile exec:java -D exec.mainClass=edu.nwmissouri.BigDataGroup6.MinimalPageRankMandapati
+
 ```
