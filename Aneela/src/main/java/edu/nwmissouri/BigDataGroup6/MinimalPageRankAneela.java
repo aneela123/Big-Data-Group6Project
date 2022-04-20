@@ -218,7 +218,7 @@ return updatedOutput;
 public static  void deleteFiles(){
   final File file = new File("./");
   for (File f : file.listFiles()){
-    if(f.getName().startsWith("Aneela")){
+    if(f.getName().startsWith("Ankam")){
       f.delete();
     }
   }
