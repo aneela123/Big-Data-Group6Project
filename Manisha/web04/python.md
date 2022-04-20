@@ -3,4 +3,4 @@
 Links:
 
 [README](README.md)
-[Scala](Scala.md)
+[Scala](Scala.md) 
