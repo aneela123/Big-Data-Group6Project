@@ -33,5 +33,5 @@ mvn compile exec:java -D exec.mainClass=org.apache.beam.examples.WordCount `
 ## Execute PR Quick Start
 
 ```PowerShell
-mvn compile exec:java -D exec.mainClass=org.apache.beam.examples.MinimalPageRankCase 
+mvn compile exec:java -D exec.mainClass=org.apache.beam.examples.MinimalPageRankPriyanka
 ```
