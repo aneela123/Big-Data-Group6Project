@@ -35,3 +35,5 @@ mvn compile exec:java -D exec.mainClass=org.apache.beam.examples.WordCount `
 ```PowerShell
 mvn compile exec:java -D exec.mainClass=edu.nwmissouri.BigDataGroup6.MinimalPageRankTejaswiN
 ```
+## Useful links
+- [My Wiki](https://github.com/aneela123/Big-Data-Group6Project/wiki/Tejaswi)
