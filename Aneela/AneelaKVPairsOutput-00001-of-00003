@@ -1,3 +1,4 @@
 KV{go.md, [README.md, cSharp.md]}
+KV{java.md, [cSharp.md, README.md]}
 KV{README.md, [go.md, java.md, python.md]}
-KV{java.md, [README.md, cSharp.md]}
+KV{python.md, [cSharp.md, README.md]}

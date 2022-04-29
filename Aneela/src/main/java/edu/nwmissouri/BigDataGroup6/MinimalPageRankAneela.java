@@ -76,43 +76,53 @@ public class MinimalPageRankAneela {
 
   static class Job2Mapper extends DoFn<KV<String, RankedPage>, KV<String, RankedPage>> {
     @ProcessElement
-    public void processElement(@Element KV<String, Iterable<String>> element,
+    public void processElement(@Element KV<String, RankedPage> element,
         OutputReceiver<KV<String, RankedPage>> receiver) {
-      Integer contributorVotes = 0;
-      if (element.getValue() instanceof Collection) {
-        contributorVotes = ((Collection<String>) element.getValue()).size();
+      Integer votes = 0;
+
+      ArrayList<VotingPage> voters = element.getValue().getVoters();
+      if(voters instanceof Collection){
+         votes = ((Collection<VotingPage>)voters).size();
       }
 
-      ArrayList<VotingPage> voters = new ArrayList<VotingPage>();
-      for (String voterName : element.getValue()) {
-        if (!voterName.isEmpty()) {
-          voters.add(new VotingPage(voterName, contributorVotes));
-        }
+      for(VotingPage v: voters){
+        String pageName = v.getName();
+        Double pageRank = v.getRank();
+        String contributingPageName = element.getKey();
+        Double contributingPageRank = element.getValue().getRank();
+        VotingPage contributor = new VotingPage(contributingPageName, contributingPageRank, votes);
+        ArrayList<VotingPage> arr = new ArrayList<VotingPage>();
+        arr.add(contributor);
+        receiver.output(KV.of(v.getName(), new RankedPage(pageName,pageRank,arr)));
       }
-      receiver.output(KV.of(element.getKey(), new RankedPage(element.getKey(), voters)));
-    }
   }
+}
 
   static class Job2Updater extends DoFn<KV<String, Iterable<RankedPage>>, KV<String, RankedPage>> {
     @ProcessElement
-    public void processElement(@Element KV<String, Iterable<String>> element,
+    public void processElement(@Element KV<String, Iterable<RankedPage>> element,
         OutputReceiver<KV<String, RankedPage>> receiver) {
-      Integer contributorVotes = 0;
-      if (element.getValue() instanceof Collection) {
-        contributorVotes = ((Collection<String>) element.getValue()).size();
-      }
-      ArrayList<VotingPage> voters = new ArrayList<VotingPage>();
-      for (String voterName : element.getValue()) {
-        if (!voterName.isEmpty()) {
-          voters.add(new VotingPage(voterName, contributorVotes));
-        }
-      }
-      receiver.output(KV.of(element.getKey(), new RankedPage(element.getKey(), voters)));
+          String page = element.getKey();
+          Iterable<RankedPage> rankedPages = element.getValue();
+          Double dampingFactor = 0.85;
+          Double updatedRank = (1-dampingFactor);
+          ArrayList<VotingPage> newVoters = new ArrayList<VotingPage>();
+          for(RankedPage pg : rankedPages){
+            if(pg != null){
+              for(VotingPage vPage : pg.getVoters()){
+                newVoters.add(vPage);
+                updatedRank += (dampingFactor) * vPage.getRank() / (double)vPage.getVotes();
+              }
+            }
+          }
+          receiver.output(KV.of(page, new RankedPage(page, updatedRank, newVoters)));
     }
   }
 
 
   public static void main(String[] args) {
+
+    deleteFiles();
 
     PipelineOptions options = PipelineOptionsFactory.create();
 
@@ -141,9 +151,24 @@ public class MinimalPageRankAneela {
     PCollection<KV<String, String>> PCMergeList = PColKVPairList.apply(Flatten.<KV<String, String>>pCollections());
     
     PCollection<KV<String, Iterable<String>>> PCGrpList =PCMergeList.apply(GroupByKey.create());
-    
-    
-    
+
+    PCollection<KV<String, RankedPage>> job2in = PCGrpList.apply(ParDo.of(new Job1Finalizer()));
+
+
+   PCollection<KV<String, RankedPage>> newUpdatedOutput = null;
+   PCollection<KV<String, RankedPage>> mappedKVPairs = null;
+
+   int iterations = 40;
+   for(int i=0; i<iterations; i++){
+     if(i==0){
+       mappedKVPairs = job2in.apply(ParDo.of(new Job2Mapper()));
+     }else{
+       mappedKVPairs = newUpdatedOutput.apply(ParDo.of(new Job2Mapper()));
+     }
+     PCollection<KV<String, Iterable<RankedPage>>> reducedKVPairs = mappedKVPairs.apply(GroupByKey.<String, RankedPage>create());
+     newUpdatedOutput = reducedKVPairs.apply(ParDo.of(new Job2Updater()));
+    }
+       
     PCollection<String> PColLink = PCGrpList.apply(
         MapElements.into(
             TypeDescriptors.strings())
@@ -177,42 +202,6 @@ public class MinimalPageRankAneela {
      
                    
     return PColLinkKVPair;
-}
-
- /**
- * Run one iteration of the Job 2 Map-Reduce process
- * Notice how the Input Type to Job 2.
- * Matches the Output Type from Job 2.
- * How important is that for an iterative process?
- * 
- * @param kvReducedPairs - takes a PCollection<KV<String, RankedPage>> with
- *                       initial ranks.
- * @return - returns a PCollection<KV<String, RankedPage>> with updated ranks.
- */
-private static PCollection<KV<String, RankedPage>> runJob2Iteration(
-  PCollection<KV<String, RankedPage>> kvReducedPairs) {
-
-//    PCollection<KV<String, RankedPage>> mappedKVs = kvReducedPairs.apply(ParDo.of(new Job2Mapper()));
-
-// KV{README.md, README.md, 1.00000, 0, [java.md, 1.00000,1]}
-// KV{README.md, README.md, 1.00000, 0, [go.md, 1.00000,1]}
-// KV{java.md, java.md, 1.00000, 0, [README.md, 1.00000,3]}
-
-// PCollection<KV<String, Iterable<RankedPage>>> reducedKVs = mappedKVs
-//     .apply(GroupByKey.<String, RankedPage>create());
-
-// KV{java.md, [java.md, 1.00000, 0, [README.md, 1.00000,3]]}
-// KV{README.md, [README.md, 1.00000, 0, [python.md, 1.00000,1], README.md,
-// 1.00000, 0, [java.md, 1.00000,1], README.md, 1.00000, 0, [go.md, 1.00000,1]]}
-
-// PCollection<KV<String, RankedPage>> updatedOutput = reducedKVs.apply(ParDo.of(new Job2Updater()));
-
-// KV{README.md, README.md, 2.70000, 0, [java.md, 1.00000,1, go.md, 1.00000,1,
-// python.md, 1.00000,1]}
-// KV{python.md, python.md, 0.43333, 0, [README.md, 1.00000,3]}
-
-PCollection<KV<String, RankedPage>> updatedOutput = null;
-return updatedOutput;
 }
 
 public static  void deleteFiles(){
