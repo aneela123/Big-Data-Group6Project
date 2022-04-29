@@ -8,6 +8,11 @@ Java Quickstart for Apache Beam
 
 - Java
 - Maven
+## My Project:
+
+- Group Repo: https://github.com/aneela123/Big-Data-Group6Project
+- My Wiki Page: https://github.com/aneela123/Big-Data-Group6Project/wiki/Aneela
+- My individual Project Workspace: https://github.com/aneela123/Big-Data-Group6Project/tree/main/Aneela
 
 ## Get the Sample Project
 
