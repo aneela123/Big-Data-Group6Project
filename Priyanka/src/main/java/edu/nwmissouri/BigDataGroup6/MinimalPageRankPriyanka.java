@@ -91,6 +91,51 @@ public class MinimalPageRankPriyanka {
       receiver.output(KV.of(element.getKey(), new RankedPage(element.getKey(), voters)));
     }
   }
+    static class Job2Mapper extends DoFn<KV<String, RankedPage>, KV<String, RankedPage>> {
+    @ProcessElement
+    public void processElement(@Element KV<String, RankedPage> element,
+        OutputReceiver<KV<String, RankedPage>> receiver) {
+      Integer votes = 0;
+
+      ArrayList<VotingPage> voters = element.getValue().getVoters();
+      if(voters instanceof Collection){
+         votes = ((Collection<VotingPage>)voters).size();
+      }
+
+      for(VotingPage v: voters){
+        String pageName = v.getName();
+        Double pageRank = v.getRank();
+        String contributingPageName = element.getKey();
+        Double contributingPageRank = element.getValue().getRank();
+        VotingPage contributor = new VotingPage(contributingPageName, contributingPageRank, votes);
+        ArrayList<VotingPage> arr = new ArrayList<VotingPage>();
+        arr.add(contributor);
+        receiver.output(KV.of(v.getName(), new RankedPage(pageName,pageRank,arr)));
+      }
+  }
+}
+
+  static class Job2Updater extends DoFn<KV<String, Iterable<RankedPage>>, KV<String, RankedPage>> {
+    @ProcessElement
+    public void processElement(@Element KV<String, Iterable<RankedPage>> element,
+        OutputReceiver<KV<String, RankedPage>> receiver) {
+          String page = element.getKey();
+          Iterable<RankedPage> rankedPages = element.getValue();
+          Double dampingFactor = 0.85;
+          Double updatedRank = (1-dampingFactor);
+          ArrayList<VotingPage> newVoters = new ArrayList<VotingPage>();
+          for(RankedPage pg : rankedPages){
+            if(pg != null){
+              for(VotingPage vPage : pg.getVoters()){
+                newVoters.add(vPage);
+                updatedRank += (dampingFactor) * vPage.getRank() / (double)vPage.getVotes();
+              }
+            }
+          }
+          receiver.output(KV.of(page, new RankedPage(page, updatedRank, newVoters)));
+    }
+  }
+
 
   public static void main(String[] args) {
 
@@ -142,6 +187,23 @@ public class MinimalPageRankPriyanka {
     
     PCollectionList<KV<String, String>> pCollectionKVlist = PCollectionList.of(pcollectionKV1).and(pcollectionKV2).and(pcollectionKV3).and(pcollectionKV4);
     PCollection<KV<String, String>> mergedList = pCollectionKVlist.apply(Flatten.<KV<String, String>>pCollections());
+      PCollection<KV<String, RankedPage>> job2in = PCGrpList.apply(ParDo.of(new Job1Finalizer()));
+
+
+   PCollection<KV<String, RankedPage>> newUpdatedOutput = null;
+   PCollection<KV<String, RankedPage>> mappedKVPairs = null;
+     
+     int iterations = 40;
+   for(int i=0; i<iterations; i++){
+     if(i==0){
+       mappedKVPairs = job2in.apply(ParDo.of(new Job2Mapper()));
+     }else{
+       mappedKVPairs = newUpdatedOutput.apply(ParDo.of(new Job2Mapper()));
+     }
+     PCollection<KV<String, Iterable<RankedPage>>> reducedKVPairs = mappedKVPairs.apply(GroupByKey.<String, RankedPage>create());
+     newUpdatedOutput = reducedKVPairs.apply(ParDo.of(new Job2Updater()));
+    }
+     
     PCollection<String> pCollectionLink = mergedList.apply(
         MapElements.into(TypeDescriptors.strings()).via((myMergeLstout) -> myMergeLstout.toString()));
        // By default, it will write to a set of files with names like wordcounts-00001-of-00005
